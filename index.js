@@ -25,7 +25,7 @@ const app = express()
 const PORT = 8908
 
 app.use(async(req,res,next)=>{
-    let extReq = await fetch(websiteRootUrl+req.path)
+    let extReq = await fetch(websiteRootUrl+req.url)
     console.log(extReq.headers)
     res.set("content-type", extReq.headers.get("content-type"))
     res.status(extReq.status)
