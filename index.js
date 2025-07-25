@@ -1,4 +1,4 @@
-// server.js
+// index.js
 import { createServer } from "node:http";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
