@@ -157,7 +157,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 
-const PORT = 8080;
+const PORT = 8000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on http://localhost:${PORT}`);
   console.log(`Master user: ${MASTER_USER} / ${MASTER_PASS}`);
