@@ -44,9 +44,9 @@ setInterval(async() => {
   try{
     var promises = pingUrls.map(url => axios.get(url));
     var res = await Promise.all(promises);
-    console.log("Health check pings fulfilled for" + pingUrls.join(", "));
+    console.log("Health check pings fulfilled for " + pingUrls.join(", "));
   } catch(e){
-    console.log("Health check pings failed for" + pingUrls.join(", "));
+    console.log("Health check pings failed for " + pingUrls.join(", "));
   }
 }, 10000);
 // FIX #1: Add a middleware that applies SharedWorker headers to all authenticated requests.
