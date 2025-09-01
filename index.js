@@ -1,6 +1,7 @@
 // index.js
 import dotenv from "dotenv";
 dotenv.config();
+import axios from "axios";
 import express from 'express';
 import { createServer } from 'node:http';
 import { join, dirname } from 'node:path';
