@@ -25,7 +25,7 @@ import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 const MASTER_USER = process.env.MASTER_USER || 'uv-master';
 const MASTER_PASS = process.env.MASTER_PASS || 'enable-proxy-mode';
 const COOKIE_NAME = 'proxy_access';
-
+const pingUrls = [];
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicPath = join(__dirname, 'public');
 const secretPath = join(__dirname, 'proxy');
@@ -38,13 +38,24 @@ const NO_CACHE_HEADERS = {
 
 const app = express();
 
-// Parse cookies & JSON bodies
 app.use(cookieParser());
 app.use(express.json());
-
+setInterval(async() => {
+  try{
+    var promises = pingUrls.map(url => axios.get(url));
+    var res = await Promise.all(promises);
+    console.log("Health check pings fulfilled for" + pingUrls.join(", "));
+  } catch(e){
+    console.log("Health check pings failed for" + pingUrls.join(", "));
+  }
+}, 10000);
 // FIX #1: Add a middleware that applies SharedWorker headers to all authenticated requests.
 // This ensures that the main HTML page gets the correct headers, which is crucial.
 app.use((req, res, next) => {
+  var origin = req.protocol + '://' + req.get('host');
+  if(!pingUrls.includes(origin)){
+    pingUrls.push(origin);
+  }
   const ip = req.headers["x-forwarded-for"] || "true";
   if (req.cookies[COOKIE_NAME] === encode(ip)) {
     // These headers are required for the SharedWorker to function.
