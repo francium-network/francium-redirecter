@@ -47,6 +47,7 @@ setInterval(async() => {
     console.log("Health check pings fulfilled for " + pingUrls.join(", "));
   } catch(e){
     console.log("Health check pings failed for " + pingUrls.join(", "));
+    console.log(e.message);
   }
 }, 10000);
 // FIX #1: Add a middleware that applies SharedWorker headers to all authenticated requests.
