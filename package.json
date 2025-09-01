@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ."
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +14,12 @@
     "@mercuryworkshop/bare-mux": "^2.1.6",
     "@mercuryworkshop/libcurl-transport": "^1.5.0",
     "@titaniumnetwork-dev/ultraviolet": "^3.2.10",
+    "axios": "^1.11.0",
     "basic-auth": "^2.0.1",
     "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "wisp-server-node": "^1.1.7"
   }

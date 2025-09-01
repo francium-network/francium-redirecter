@@ -1,4 +1,6 @@
 // index.js
+import dotenv from "dotenv";
+dotenv.config();
 import express from 'express';
 import { createServer } from 'node:http';
 import { join, dirname } from 'node:path';
@@ -6,6 +8,10 @@ import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import basicAuth from 'basic-auth';
 import wisp from 'wisp-server-node';
+import { WebSocketServer } from 'ws';
+import BotAPI from './bot.js';
+import proxyAPI from './proxyAPI.js';
+
 // FIX: Import the 'cookie' package to parse cookies in the upgrade handler
 import cookie from 'cookie';
 
@@ -126,6 +132,62 @@ app.get('/r/:data', (req, res) => {
 app.use((req, res) => {
   res.status(404).sendFile(join(publicPath, '404.html'));
 });
+const proxyBot = new BotAPI.ProxyBotAPI({ proxyAPI });
+
+// <<< NEW: Create the WebSocket Server >>>
+const wss = new WebSocketServer({ noServer: true });
+
+wss.on('connection', (ws, req) => {
+    console.log('Dashboard client connected.');
+
+    // Function to send data back to the client
+    const send = (command, data, status = 'success', error = null) => {
+        ws.send(JSON.stringify({ command, status, data, error }));
+    };
+
+ws.on('message', async (message) => {
+    try {
+        const parsed = JSON.parse(message);
+        const { command, params } = parsed;
+
+        console.log(`Received command from dashboard: ${command}`);
+
+        switch (command) {
+            case 'getCacheStatus': {
+                const status = proxyBot.getCacheStatus();
+                send(command, status);
+                break;
+            }
+            case 'getProxies': {
+                if (!params || !params.type || !params.filter) {
+                    return send(command, null, 'error', 'Missing parameters: type and filter are required.');
+                }
+                // CRITICAL: Always use forceRefresh: false to ensure users can only get from cache.
+                const result = await proxyBot.getProxies(params.type, params.filter, params.count, {
+                    forceRefresh: false
+                });
+                send(command, result);
+                break;
+            }
+            default:
+                // If the command is not 'getCacheStatus' or 'getProxies', it's unknown and rejected.
+                console.log(`Denied unknown command from dashboard: ${command}`);
+                send(command, null, 'error', 'Access Denied: Unknown or forbidden command.');
+        }
+    } catch (err) {
+        console.error('Error processing WebSocket message:', err);
+        ws.send(JSON.stringify({ status: 'error', error: 'Invalid message format or server error.' }));
+    }
+});
+
+    ws.on('close', () => {
+        console.log('Dashboard client disconnected.');
+    });
+
+    ws.on('error', (err) => {
+        console.error('WebSocket error:', err);
+    });
+});
 
 const server = createServer(app);
 
@@ -135,30 +197,42 @@ server.on('upgrade', (req, socket, head) => {
     console.error('Socket error on upgrade:', err);
     socket.destroy();
   });
+  const ip = req.headers["x-forwarded-for"] || "true";
+  const cookies = cookie.parse(req.headers.cookie || '');
+  const isAuthenticated = cookies[COOKIE_NAME] === encode(ip);
   
-  // Wisp expects the connection to be at /wisp/
-  if (req.url.endsWith('/wisp/')) {
-    const ip = req.headers["x-forwarded-for"] || "true";
-    const cookies = cookie.parse(req.headers.cookie || '');
-    
-    // Check if the auth cookie is present and valid
-    if (cookies[COOKIE_NAME] === encode(ip)) {
-      // If authenticated, route the request to Wisp
-      wisp.routeRequest(req, socket, head);
-    } else {
-      // If not authenticated, deny the connection
-      socket.destroy();
-    }
-    return;
+  if (!isAuthenticated) {
+    console.log('Upgrade request denied: not authenticated.');
+    return socket.destroy();
   }
-  
+  if (req.url === '/api-ws') {
+    console.log('Routing to API WebSocket...');
+    wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit('connection', ws, req);
+    });
+  } 
+  // Route to Wisp
+  else if (req.url.endsWith('/wisp/')) {
+    console.log('Routing to Wisp WebSocket...');
+    wisp.routeRequest(req, socket, head);
+  } 
   // Destroy any other upgrade requests
-  socket.destroy();
+  else {
+    socket.destroy();
+  }
 });
 
 
 const PORT = 8000;
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server listening on http://localhost:${PORT}`);
   console.log(`Master user: ${MASTER_USER} / ${MASTER_PASS}`);
+    try {
+    console.log("Starting ProxyBotAPI...");
+    await proxyBot.createBot();
+    console.log("ProxyBotAPI started and connected to Discord.");
+    // The bot's `ready` event will trigger the first automated update.
+  } catch(e) {
+    console.error("FATAL: Could not start ProxyBotAPI.", e);
+  }
 });
