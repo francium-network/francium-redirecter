@@ -10,16 +10,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "axios": "^1.11.0",
-    "basic-auth": "^2.0.1",
-    "cheerio": "^1.1.2",
-    "cookie": "^1.0.2",
-    "cookie-parser": "^1.4.7",
-    "discord.js": "^14.21.0",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "http-proxy": "^1.18.1"
-  }
+  "type": "module"
 }
