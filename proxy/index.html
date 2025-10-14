@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Secure Link Generator</title>
   <script src="/tailwind.js"></script>
-  <script src="./bm/index.js"></script>
-	<script src="./lcl/index.js"></script>
-  <script src="/uv/uv.bundle.js"></script>
-  <script src="/uv/uv.config.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
 
@@ -347,6 +343,74 @@ particlesJS('particles-js', {
 
   <!-- Load Particles Script -->
 <script>
+        const PROXY_QUERY_PARAM = '__cpo';
+        function createProxyUrl(targetUrl) {
+            try {
+                const url = new URL(targetUrl);
+                // Do not proxy data/blob URLs
+                if (['data:', 'blob:', 'mailto:'].includes(url.protocol)) {
+                    return targetUrl;
+                }
+                const encodedOrigin = btoa(url.origin);
+                url.searchParams.set(PROXY_QUERY_PARAM, encodedOrigin);
+                url.host = location.host;
+                url.protocol = location.protocol;
+                return url.href;
+            } catch (e) {
+                console.warn(`Could not create proxy URL for: ${targetUrl}`);
+                return targetUrl;
+            }
+        }
+
+        async function search(inputString) {
+            const trimmedInput = inputString.trim();
+            if (!trimmedInput) return;
+            const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/[a-zA-Z0-9]+\.[^\s]{2,}|[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+
+            let isUrlCandidate = false;
+            let urlToAttempt = '';
+
+            if (urlRegex.test(trimmedInput)) {
+                isUrlCandidate = true;
+                if (!trimmedInput.startsWith('http://') && !trimmedInput.startsWith('https://')) {
+                    urlToAttempt = `https://${trimmedInput}`;
+                } else {
+                    urlToAttempt = trimmedInput;
+                }
+            }
+
+            try {
+                if (isUrlCandidate) {
+                    console.log(`Checking URL existence via server: ${urlToAttempt}`);
+                    const checkResponse = await fetch(`/check?url=${encodeURIComponent(urlToAttempt)}`);
+
+                    if (checkResponse.ok) {
+                        const textResponse = await checkResponse.text();
+                        const urlExists = textResponse === 'true';
+
+                        if (urlExists) {
+                            console.log(`URL exists, navigating to: ${urlToAttempt}`);
+                            return urlToAttempt;
+                        } else {
+                            console.log(`URL does not exist: ${urlToAttempt}`);
+                            return urlToAttempt;
+                        }
+                    } else {
+                        console.error('Error from /check endpoint:', checkResponse.status, checkResponse.statusText);
+                    }
+                }
+
+                const duckDuckGoUrl = `https://duckduckgo.com/?q=${encodeURIComponent(trimmedInput)}`;
+                console.log(`Performing DuckDuckGo search for: ${trimmedInput}`);
+                return duckDuckGoUrl;
+
+            } catch (error) {
+                console.error('Network or unexpected error during search:', error);
+                const duckDuckGoUrl = `https://duckduckgo.com/?q=${encodeURIComponent(trimmedInput)}`;
+                console.log(`Fallback to DuckDuckGo due to error: ${trimmedInput}`);
+                return duckDuckGoUrl;
+            }
+        }
   // Matrix Effect
   function createMatrixEffect() {
     const matrixBg = document.getElementById('matrixBg');
@@ -384,14 +448,6 @@ particlesJS('particles-js', {
     document.getElementById('timestamp').textContent = now.toISOString().replace('T', ' ').slice(0, 19);
   }
 
-  // Process User Input into Valid URL
-  function processUrl(input) {
-    if (!input.trim()) return '';
-    if (input.match(/^https?:\/\//)) return input;
-    if (input.includes('.') && !input.includes(' ')) return 'https://' + input;
-    return 'https://www.google.com/search?q=' + encodeURIComponent(input);
-  }
-
   // Force UV-only loading
   async function loadUrl(url) {
     const iframe = document.getElementById('proxyFrame');
@@ -400,32 +456,20 @@ particlesJS('particles-js', {
     const currentUrl = document.getElementById('currentUrl');
 
     statusText.textContent = 'CONNECTING...';
-      const connection = new BareMux.BareMuxConnection("/bm/worker.js");
-  	let wispUrl = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
-	  if (await connection.getTransport() !== "/lcl/index.mjs") {
-		  await connection.setTransport("/lcl/index.mjs", [{ wisp: wispUrl }]);
-	  }
+    url = await search(url);
     currentUrl.textContent = url;
-
-    if (typeof __uv$config !== 'undefined') {
-      iframe.src = __uv$config.prefix + __uv$config.encodeUrl(url);
-      welcomeScreen.style.display = 'none';
-      iframe.style.display = 'block';
-      statusText.textContent = 'CONNECTED';
-    } else {
-      console.error("Ultraviolet config missing");
-      statusText.textContent = 'UV ERROR';
-    }
+    document.cookie = "shouldProxy=true; path=/";
+    iframe.src = createProxyUrl(url);
+    welcomeScreen.style.display = 'none';
+    iframe.style.display = 'block';
+    statusText.textContent = 'CONNECTED';
   }
 
   // Input and button listeners
-  document.getElementById('goButton').addEventListener('click', () => {
+  document.getElementById('goButton').addEventListener('click', async () => {
     const input = document.getElementById('urlInput').value;
-    const url = processUrl(input);
-    if (url) {
-      loadUrl(url);
-      document.getElementById('urlInput').value = '';
-    }
+    await loadUrl(input);
+    document.getElementById('urlInput').value = '';
   });
 
   document.getElementById('urlInput').addEventListener('keypress', (e) => {

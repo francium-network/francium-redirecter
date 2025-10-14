@@ -1,12 +1,13 @@
 import axios from "axios";
-import path from "node:path";
-import { fileURLToPath } from 'node:url';
-import fs from "node:fs";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 var isGettingAlready = false;
 var isCheckingAlready = false;
 var api = {
+    unblockedCategories: [
+  6, 9, 10, 14, 15, 18, 20, 29, 30, 36, 37, 40, 41, 43, 44, 45, 46, 47, 48, 49,
+  50, 51, 57, 58, 59, 69, 73, 75, 76, 77, 79, 83, 84, 85, 99, 129, 131, 132,
+  139, 140, 900,
+],
     currentGames: [],
     currentUltras: [],
     currentRammers: [], 
@@ -111,8 +112,8 @@ var api = {
               },
             }
           );
-          const category = api.categories[response.data["data"]["a"]["cat"]];
-          return !api.unblockedCategories.includes(category);
+          const category = response.data["data"]["a"]["cat"];
+          return !api.unblockedCategories.some(el => el == category);
         } catch (e) {
           if (e.message.includes("Request failed with status code 406")) {
             return true;
@@ -143,7 +144,5 @@ var api = {
       });
       return response.data.domains;
     },
-    unblockedCategories : ['business', 'education', 'business.finance', 'general', 'government', 'business.jobs', 'news', 'shopping', 'sports', 'travel', 'automobile', 'humor', 'education.lifestyles', 'family.health', 'education.science', 'entertainment', 'kids_and_teens', 'education.arts', 'education.literature', 'music', 'education.music', 'microsoft', 'computers', 'family.religion', 'world', 'kids_and_teens.chat', 'business.real_estate', 'education.social_science', 'family.food', 'society', 'hobby', 'sports.youth', 'search', 'education.history', 'education.media', 'entertainment.radio_and_tv', 'photography', 'sports.esports', 'artificial_intelligence', 'youtube'],
-    categories: JSON.parse(fs.readFileSync(path.join(__dirname, "categories.json"), 'utf8')),
 }
 export default api;
