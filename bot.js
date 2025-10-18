@@ -48,7 +48,7 @@ class ProxyBotAPI {
             "galaxy": "galacticsurf.boats",
             "ghost": "104.36.84.230",
             "gn-math": "gn-math.dev",
-            "interstellar": "gointerstellar.app",
+            "interstellar": "66.23.193.126",
             "jordan's Math Work": "37.27.88.135",
             "kazwire": "kazwire.com",
             "luminalOS": "152.53.210.103",
@@ -1012,4 +1012,5 @@ export default {
             return chunks;
         }
     }
+
 };
