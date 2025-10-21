@@ -20,18 +20,18 @@ button:hover {
   background-color: #45a049;
 }
 
-.ad-slot {
+.sponsor-slot {
   margin: 2rem 0;
   text-align: center;
 }
-.ad-slot img {
+.sponsor-slot img {
   max-width: 400px;
   width: 100%;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   transition: transform 0.3s ease;
 }
-.ad-slot img:hover {
+.sponsor-slot img:hover {
   transform: scale(1.03);
 }
 footer {
