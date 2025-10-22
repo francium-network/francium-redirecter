@@ -6,41 +6,52 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <h1>🔒 Secure Link Generator - Encrypt your urls completely for free!</h1>
-  <form id="generatorForm">
-    <input type="url" name="url" placeholder="Target URL" required><br>
-    <input type="text" name="username" placeholder="Username" required><br>
-    <input type="password" name="password" placeholder="Password" required><br>
-    <button type="submit">Generate Secure Link</button>
-  </form>
+<h1>🔒 Secure Link Generator - Encrypt your urls completely for free!</h1>
+<form id="generatorForm">
+  <input type="url" name="url" placeholder="Target URL" required><br>
+  <input type="text" name="username" placeholder="Username" required><br>
+  <input type="password" name="password" placeholder="Password" required><br>
+  <button type="submit">Generate Secure Link</button>
+</form>
 
-  <div id="output"></div>
+<div id="output"></div>
 
-  <script>
-    document.getElementById("generatorForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const res = await fetch("/api/encode", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: form.url.value,
-          username: form.username.value,
-          password: form.password.value,
-        }),
-      });
+<!-- Ad slot -->
+<div class="ad-slot">
+  <a href="https://pplx.ai/free-comet-and-pro" target="_blank" rel="noopener noreferrer">
+    <img src="/comet.png" alt="Comet Browser by Perplexity - Free for Students">
+  </a>
+</div>
 
-      const data = await res.json();
-      if (res.ok) {
-        const link = `${location.origin}/r/${data.data}`;
-        document.getElementById("output").innerHTML = `
+<footer>
+  <p><a href="/canlite.html">Hosted by CanLite</a></p>
+</footer>
+
+<script>
+  document.getElementById("generatorForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const res = await fetch("/api/encode", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: form.url.value,
+        username: form.username.value,
+        password: form.password.value,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      const link = `${location.origin}/r/${data.data}`;
+      document.getElementById("output").innerHTML = `
           <p>🔗 Secure Link (requires credentials):</p>
           <input type="text" value="${link}" readonly style="width:100%">
         `;
-      } else {
-        document.getElementById("output").textContent = "❌ Error: " + data.message;
-      }
-    });
-  </script>
+    } else {
+      document.getElementById("output").textContent = "❌ Error: " + data.message;
+    }
+  });
+</script>
 </body>
 </html>
